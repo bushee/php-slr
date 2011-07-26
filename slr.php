@@ -128,7 +128,7 @@ class Situation
 		$this->dot = $dot;
 	}
 
-	public function key()
+	public function getKey()
 	{
 		return $this->rule . '.' . $this->dot;
 	}
@@ -198,11 +198,13 @@ class Situation
 class SituationSet implements ArrayAccess, Iterator
 {
 	protected $set;
+	protected $key;
 	protected $current;
 
 	public function __construct()
 	{
 		$this->set = array();
+		$this->invalidateKey();
 	}
 
 	public function offsetExists($offset)
@@ -217,6 +219,7 @@ class SituationSet implements ArrayAccess, Iterator
 
 	public function offsetSet($offset, $value)
 	{
+		$this->invalidateKey();
 		return $this->set[$offset] = $value;
 	}
 
@@ -227,13 +230,14 @@ class SituationSet implements ArrayAccess, Iterator
 
 	public function add($situation)
 	{
-		$key = $situation->key();
+		$key = $situation->getKey();
 		if (isset($this->set[$key]))
 		{
 			return false;
 		}
 		else
 		{
+			$this->invalidateKey();
 			$this->set[$key] = $situation;
 			return true;
 		}
@@ -322,7 +326,29 @@ class SituationSet implements ArrayAccess, Iterator
 
 	public function equals($set)
 	{
-		return $this->set == $set->set;
+		return $this->getKey() == $set->getKey();
+	}
+
+	public function getKey()
+	{
+		if (!isset($this->key))
+		{
+			$keys = array();
+			foreach ($this->set as $situation)
+			{
+				$key = $situation->getKey();
+				$keys[$key] = $key;
+			}
+			sort($keys);
+			$this->key = implode('|', $keys);
+		}
+
+		return $this->key;
+	}
+
+	public function invalidateKey()
+	{
+		$this->key = null;
 	}
 
 	public function __toString()
@@ -341,52 +367,46 @@ class SituationSet implements ArrayAccess, Iterator
 class TransitionSet
 {
 	protected $states;
+	protected $stateIds;
 
 	public function __construct(&$slr)
 	{
 		$this->states = array();
+		$this->stateIds = array();
 
 		$situation = new Situation($slr, 0, 0);
 		$closure = $situation->closure();
 
-		$this->getStateId($closure);
+		$this->addState($closure);
 
 		for ($i = 0; $i < count($this->states); ++ $i)
 		{
-			$set = $this->states[$i]['set'];
+			$set = $this->states[$i]->getSet();
 			foreach ($set->nextTokens() as $next)
 			{
-				$this->states[$i]['transitions'][$next] = $this->getStateId($set->transition($next));
+				$this->states[$i]->addTransition($next, $this->addState($set->transition($next)));
 			}
 		}
 	}
 
-	protected function getStateId($situationSet, $addState = true)
+	protected function addState($situationSet, $addState = true)
 	{
-		$id = $this->find($situationSet);
-		if ($id === false && $addState)
+		$id = false;
+
+		if (isset($this->stateIds[$situationSet->getKey()]))
 		{
-			$id = count($this->states);
-			$state = array(
-				'id' => $id,
-				'set' => $situationSet,
-				'transitions' => array()
-			);
-			$this->states[] = $state;
+			$id = $this->stateIds[$situationSet->getKey()];
 		}
+		elseif ($addState)
+		{
+			$state = new State($situationSet);
+			$id = $state->getId();
+
+			$this->states[$id] = $state;
+			$this->stateIds[$situationSet->getKey()] = $id;
+		}
+
 		return $id;
-	}
-
-	public function find($situationSet)
-	{
-		foreach ($this->states as $state)
-		{
-			if ($situationSet->equals($state['set']))
-			{
-				return $state['id'];
-			}
-		}
-		return false;
 	}
 
 	public function __toString()
@@ -395,16 +415,58 @@ class TransitionSet
 
 		foreach ($this->states as $state)
 		{
-			$ret .= 'state ' . $state['id'] . ":\n";
-			$ret .= $state['set'];
-			$ret .= "transitions:\n";
-			foreach ($state['transitions'] as $token => $next)
-			{
-				$ret .= "$token -> $next\n";
-			}
-			$ret .= "\n";
+			$ret .= "$state\n";
 		}
 
+		return $ret;
+	}
+}
+
+class State
+{
+	protected $id;
+	protected $set;
+	protected $transitions;
+
+	protected static $count = 0;
+
+	public function __construct($set)
+	{
+		$this->id = self::$count ++;
+		$this->set = $set;
+		$this->transitions = array();
+	}
+
+	public function getId()
+	{
+		return $this->id;
+	}
+
+	public function getSet()
+	{
+		return $this->set;
+	}
+
+	public function addTransition($token, $state)
+	{
+		if (isset($this->transitions[$token]))
+		{
+			throw new Exception("This state already has a transition for token '$token'.");
+		}
+
+		$this->transitions[$token] = $state;
+	}
+
+	public function __toString()
+	{
+		$ret = 'state ' . $this->id . ":\n";
+		$ret .= $this->set;
+		$ret .= "transitions:\n";
+		foreach ($this->transitions as $token => $next)
+		{
+			$ret .= "$token -> $next\n";
+		}
+		$ret .= "\n";
 		return $ret;
 	}
 }
