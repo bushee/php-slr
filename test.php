@@ -26,3 +26,4 @@ $config = array(
 );
 
 $slr = new SLR($config);
+echo "$slr\n";

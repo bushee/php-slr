@@ -107,6 +107,152 @@ class SLR
 		}
 		return $ret;
 	}
+
+	public function __toString()
+	{
+		$table = new TablePrinter();
+
+		// top header
+		$x = 1;
+		$table->addBorder(1, TablePrinter::BORDER_HORIZONTAL);
+		$table->addBorder($x);
+		foreach ($this->terminalTokens as $token)
+		{
+			$table->cell($x, 0, $token);
+			++ $x;
+		}
+		$table->addBorder($x);
+		foreach ($this->nonterminalTokens as $token)
+		{
+			$table->cell($x, 0, $token);
+			++ $x;
+		}
+
+		// left header
+		$y = 1;
+		foreach ($this->canonicalSituationSetFamily as $state)
+		{
+			$table->cell(0, $y, $state->getId());
+			++ $y;
+		}
+
+		return $table->__toString();
+	}
+}
+
+class TablePrinter
+{
+	const BORDER_VERTICAL = 0;
+	const BORDER_HORIZONTAL = 1;
+
+	protected $data;
+	protected $colWidths;
+	protected $borders;
+	protected $padding;
+	protected $width;
+	protected $height;
+
+	public function __construct($padding = 2, $width = 0, $height = 0)
+	{
+		$this->data = array();
+		$this->colWidths = array();
+		$this->borders = array();
+		$this->padding = $padding;
+		$this->width = $width;
+		$this->height = $height;
+	}
+
+	public function cell($x, $y, $value)
+	{
+		if (!isset($this->data[$x]))
+		{
+			$this->data[$x] = array();
+		}
+		$this->data[$x][$y] = $value;
+
+		$width = strlen($value);
+		if (!isset($this->colWidths[$x]) || $this->colWidths[$x] < $width)
+		{
+			$this->colWidths[$x] = $width;
+		}
+
+		$this->width = max($x + 1, $this->width);
+		$this->height = max($y + 1, $this->height);
+	}
+
+	public function addBorder($x, $type = self::BORDER_VERTICAL)
+	{
+		$t = $this->getBorderType($type);
+		$this->borders["$t$x"] = true;
+	}
+
+	public function removeBorder($x, $type = self::BORDER_VERTICAL)
+	{
+		$t = $this->getBorderType($type);
+		unset($this->borders["$t$x"]);
+	}
+
+	private function getBorderType($type)
+	{
+		switch ($type)
+		{
+			case self::BORDER_HORIZONTAL:
+				return 'h';
+			case self::BORDER_VERTICAL:
+				return 'v';
+			default:
+				throw new Exception("Unknown border type: $type");
+		}
+	}
+
+	public function setPadding($padding)
+	{
+		$this->padding = $padding;
+	}
+
+	public function getWidth()
+	{
+		return $this->width;
+	}
+
+	public function getHeight()
+	{
+		return $this->height;
+	}
+
+	public function __toString()
+	{
+		$s = '';
+
+		for ($y = 0; $y < $this->height; ++ $y)
+		{
+			if (isset($this->borders["h$y"]))
+			{
+				for ($x = 0; $x < $this->width; ++ $x)
+				{
+					if (isset($this->borders["v$x"]))
+					{
+						$s .= '|';
+					}
+					$padding = $this->colWidths[$x] + $this->padding;
+					$s .= '|' . str_pad('', $padding, '-');
+				}
+				$s .= "|\n";
+			}
+			for ($x = 0; $x < $this->width; ++ $x)
+			{
+				if (isset($this->borders["v$x"]))
+				{
+					$s .= '|';
+				}
+				$padding = $this->colWidths[$x] + $this->padding;
+				$s .= '|' . str_pad($this->data[$x][$y], $padding, ' ', STR_PAD_BOTH);
+			}
+			$s .= "|\n";
+		}
+
+		return $s;
+	}
 }
 
 class Situation
@@ -364,7 +510,7 @@ class SituationSet implements ArrayAccess, Iterator
 	}
 }
 
-class TransitionSet
+class TransitionSet implements Iterator
 {
 	protected $states;
 	protected $stateIds;
@@ -379,12 +525,12 @@ class TransitionSet
 
 		$this->addState($closure);
 
-		for ($i = 0; $i < count($this->states); ++ $i)
+		foreach ($this as $state)
 		{
-			$set = $this->states[$i]->getSet();
+			$set = $state->getSet();
 			foreach ($set->nextTokens() as $next)
 			{
-				$this->states[$i]->addTransition($next, $this->addState($set->transition($next)));
+				$state->addTransition($next, $this->addState($set->transition($next)));
 			}
 		}
 	}
@@ -407,6 +553,31 @@ class TransitionSet
 		}
 
 		return $id;
+	}
+
+	public function current()
+	{
+		return current($this->states);
+	}
+
+	public function key()
+	{
+		return key($this->states);
+	}
+
+	public function next()
+	{
+		next($this->states);
+	}
+
+	public function rewind()
+	{
+		reset($this->states);
+	}
+
+	public function valid()
+	{
+		return key($this->states) !== null;
 	}
 
 	public function __toString()
