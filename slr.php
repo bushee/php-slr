@@ -2,20 +2,34 @@
 class SLR
 {
 	const START_TOKEN = '<start>';
+	const EPSILON_TOKEN = '<epsilon>';
 	const END_TOKEN = '$';
 
 	protected $startToken;
 	protected $rulesByLefts;
+	protected $rulesByRights;
 	protected $rulesOrdered;
 	protected $canonicalSituationSetFamily;
 	protected $terminalTokens;
 	protected $nonterminalTokens;
 
+	protected $first;
+	protected $follow;
+	protected $slrTable;
+
+	protected $showConflicts;
+	protected $conflicts;
+
 	public function __construct($config)
 	{
 		$this->startToken = $config['start'];
 		$this->rulesByLefts = array();
+		$this->rulesByRights = array();
 		$this->rulesOrdered = array();
+		$this->first = array();
+		$this->follow = array();
+		$this->showConflicts = false;
+		$this->conflicts = array();
 
 		$this->addStartRule();
 		$tokens = $this->addRules($config['rules']);
@@ -23,6 +37,8 @@ class SLR
 		$this->divideTokens($tokens);
 
 		$this->canonicalSituationSetFamily = new TransitionSet($this);
+
+		$this->slrTable = $this->calculateSlrTable();
 	}
 
 	protected function addStartRule()
@@ -34,6 +50,7 @@ class SLR
 			'callback' => ''
 		);
 		$this->rulesByLefts[self::START_TOKEN][0] = $startRule;
+		$this->rulesByRights[$this->startToken][0] = $startRule;
 		$this->rulesOrdered[0] = $startRule;
 	}
 
@@ -46,19 +63,26 @@ class SLR
 		{
 			foreach ($rules as $rule)
 			{
+				$right = $rule[0];
+				if (empty($right))
+				{
+					$right = array(self::EPSILON_TOKEN);
+				}
+
 				$rule = array(
 					'id' => $id,
 					'left' => $left,
-					'right' => $rule[0],
+					'right' => $right,
 					'callback' => $rule[1]
 				);
 
 				$this->rulesByLefts[$left][$id] = $rule;
 				$this->rulesOrdered[$id] = $rule;
 
-				foreach ($rule['right'] as $token)
+				foreach ($right as $token)
 				{
 					$tokens[$token] = $token;
+					$this->rulesByRights[$token][$id] = $rule;
 				}
 
 				++ $id;
@@ -70,22 +94,217 @@ class SLR
 
 	protected function divideTokens($tokens)
 	{
-		$this->terminalTokens = array();
-		$this->nonterminalTokens = array();
+		$this->terminalTokens = array(
+		);
+		$this->nonterminalTokens = array(
+			self::START_TOKEN => self::START_TOKEN
+		);
 
 		foreach ($tokens as $token)
 		{
 			if (isset($this->rulesByLefts[$token]))
 			{
-				$this->nonterminalTokens[] = $token;
+				$this->nonterminalTokens[$token] = $token;
 			}
 			else
 			{
-				$this->terminalTokens[] = $token;
+				$this->terminalTokens[$token] = $token;
 			}
 		}
 
-		$this->terminalTokens[] = self::END_TOKEN;
+		$this->terminalTokens[self::END_TOKEN] = self::END_TOKEN;
+		$this->terminalTokens[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+	}
+
+	protected function first($token, $visited = array())
+	{
+		$visited[$token] = $token;
+
+		if (!isset($this->first[$token]))
+		{
+			if ($this->isTerminal($token))
+			{
+				$this->first[$token] = array(
+					$token => $token
+				);
+			}
+			else
+			{
+				$first = array();
+
+				foreach ($this->rulesByLefts[$token] as $rule)
+				{
+					if (count($rule['right']) == 1 && $rule['right'][0] == self::EPSILON_TOKEN)
+					{
+						// if X -> epsilon, then epsilon is in first(X)
+						$first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+					}
+					else
+					{
+						$epsilonCounter = 0;
+						foreach ($rule['right'] as $right)
+						{
+							// avoid cycles
+							if (isset($visited[$right]))
+							{
+								continue;
+							}
+
+							$rightFirst = $this->first($right);
+							$epsilon = isset($rightFirst[self::EPSILON_TOKEN]);
+							unset($rightFirst[self::EPSILON_TOKEN]);
+
+							// first(Yi)\{epsilon} is in first(X)
+							$first = array_merge($first, $rightFirst);
+							if ($epsilon)
+							{
+								++ $epsilonCounter;
+							}
+							else
+							{
+								break;
+							}
+						}
+
+						// if epsilon is in first(Yi) for all i, epsilon is in first(X)
+						if ($epsilonCounter == count($rule['right']))
+						{
+							$first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+						}
+					}
+				}
+
+				$this->first[$token] = $first;
+			}
+		}
+
+		return $this->first[$token];
+	}
+
+	protected function follow($token, $visited = array())
+	{
+		$visited[$token] = $token;
+
+		if (!isset($this->follow[$token]))
+		{
+			$follow = array();
+
+			if ($token == self::START_TOKEN)
+			{
+				$follow[self::END_TOKEN] = self::END_TOKEN;
+			}
+			else
+			{
+				foreach ($this->rulesByRights[$token] as $rule)
+				{
+					$length = count($rule['right']);
+					foreach ($rule['right'] as $key => $rightToken)
+					{
+						if ($rightToken == $token)
+						{
+							$epsilon = false;
+							if ($key + 1 < $length)
+							{
+								$first = $this->first($rule['right'][$key + 1]);
+								$epsilon = isset($first[self::EPSILON_TOKEN]);
+								unset($first[self::EPSILON_TOKEN]);
+								$follow = array_merge($follow, $first);
+							}
+							if ($epsilon || !($key + 1 < $length))
+							{
+								if (!isset($visited[$rule['left']]))
+								{
+									$follow = array_merge($follow, $this->follow($rule['left']));
+								}
+							}
+						}
+					}
+				}
+			}
+
+			$this->follow[$token] = $follow;
+		}
+
+		return $this->follow[$token];
+	}
+
+	protected function calculateSlrTable()
+	{
+		$table = array();
+
+		foreach ($this->canonicalSituationSetFamily as $state)
+		{
+			$row = array();
+
+			foreach ($state->getTransitions() as $token => $nextState)
+			{
+				if ($this->isTerminal($token))
+				{
+					$row[$token] = new ShiftAction($nextState);
+				}
+				else
+				{
+					$row[$token] = new TransitionAction($nextState);
+				}
+			}
+			foreach ($state->getSet() as $situation)
+			{
+				if (!$situation->hasNext())
+				{
+					$rule = $situation->getRule();
+					if ($rule['left'] == self::START_TOKEN)
+					{
+						$action = new AcceptAction();
+					}
+					else
+					{
+						$action = new ReduceAction($rule['id']);
+					}
+
+					foreach ($this->follow($rule['left']) as $token)
+					{
+						if (isset($row[$token]))
+						{
+							// conflict:
+							// 1. store info about it
+							if (isset($this->conflicts[$state->getId()][$token]))
+							{
+								$this->conflicts[$state->getId()][$token][] = $action;
+							}
+							else
+							{
+								$this->conflicts[$state->getId()][$token] = array(
+									$row[$token], $action
+								);
+							}
+							// 2. resolve it by default rule
+							switch ($row[$token]->getType())
+							{
+								case 'shift':
+									// do nothing - shift remains
+									break;
+								case 'reduce':
+									// select rule with lesser id
+									if ($action->getParam() < $row[$token]->getParam())
+									{
+										$row[$token] = $action;
+									}
+									break;
+							}
+						}
+						else
+						{
+							// no conflicts
+							$row[$token] = $action;
+						}
+					}
+				}
+			}
+
+			$table[$state->getId()] = $row;
+		}
+
+		return $table;
 	}
 
 	public function rule($id)
@@ -108,9 +327,27 @@ class SLR
 		return $ret;
 	}
 
+	public function isTerminal($token)
+	{
+		return isset($this->terminalTokens[$token]);
+	}
+
+	public function isNonterminal($token)
+	{
+		return isset($this->nonterminalTokens[$token]);
+	}
+
+	public function setShowConflicts($value)
+	{
+		$this->showConflicts = $value;
+	}
+
 	public function __toString()
 	{
 		$table = new TablePrinter();
+
+		$offsetsX = array();
+		$offsetsY = array();
 
 		// top header
 		$x = 1;
@@ -118,14 +355,22 @@ class SLR
 		$table->addBorder($x);
 		foreach ($this->terminalTokens as $token)
 		{
-			$table->cell($x, 0, $token);
-			++ $x;
+			if ($token != self::EPSILON_TOKEN)
+			{
+				$table->cell($x, 0, $token);
+				$offsetsX[$token] = $x;
+				++ $x;
+			}
 		}
 		$table->addBorder($x);
 		foreach ($this->nonterminalTokens as $token)
 		{
-			$table->cell($x, 0, $token);
-			++ $x;
+			if ($token != self::START_TOKEN)
+			{
+				$table->cell($x, 0, $token);
+				$offsetsX[$token] = $x;
+				++ $x;
+			}
 		}
 
 		// left header
@@ -133,10 +378,112 @@ class SLR
 		foreach ($this->canonicalSituationSetFamily as $state)
 		{
 			$table->cell(0, $y, $state->getId());
+			$offsetsY[$state->getId()] = $y;
 			++ $y;
 		}
 
-		return $table->__toString();
+		// data
+		foreach ($this->slrTable as $state => $row)
+		{
+			foreach ($row as $token => $action)
+			{
+				if ($this->showConflicts && isset($this->conflicts[$state][$token]))
+				{
+					$text = implode('/', $this->conflicts[$state][$token]);
+				}
+				else
+				{
+					$text = $action;
+				}
+				$table->cell($offsetsX[$token], $offsetsY[$state], $text);
+			}
+		}
+
+		return (string) $table;
+	}
+}
+
+abstract class Action
+{
+	protected $param;
+
+	public function __construct($param)
+	{
+		$this->param = $param;
+	}
+
+	public function getParam()
+	{
+		return $this->param;
+	}
+
+	abstract public function getType();
+	abstract protected function prefix();
+
+	public function __toString()
+	{
+		return $this->prefix() . $this->param;
+	}
+}
+
+class ShiftAction extends Action
+{
+	public function getType()
+	{
+		return 'shift';
+	}
+
+	protected function prefix()
+	{
+		return 's';
+	}
+}
+
+class ReduceAction extends Action
+{
+	public function getType()
+	{
+		return 'reduce';
+	}
+
+	protected function prefix()
+	{
+		return 'r';
+	}
+}
+
+class TransitionAction extends Action
+{
+	public function getType()
+	{
+		return 'transition';
+	}
+
+	protected function prefix()
+	{
+		return '';
+	}
+}
+
+class AcceptAction extends Action
+{
+	public function __construct()
+	{
+	}
+
+	public function getType()
+	{
+		return 'accept';
+	}
+
+	protected function prefix()
+	{
+		return '';
+	}
+
+	public function __toString()
+	{
+		return 'ACC';
 	}
 }
 
@@ -164,6 +511,9 @@ class TablePrinter
 
 	public function cell($x, $y, $value)
 	{
+		// just to make sure
+		$value = (string) $value;
+
 		if (!isset($this->data[$x]))
 		{
 			$this->data[$x] = array();
@@ -279,9 +629,24 @@ class Situation
 		return $this->rule . '.' . $this->dot;
 	}
 
+	public function getRuleId()
+	{
+		return $this->rule;
+	}
+
+	public function getRule()
+	{
+		return $this->slr->rule($this->rule);
+	}
+
+	public function hasNext()
+	{
+		return $this->dot < $this->slr->ruleLength($this->rule);
+	}
+
 	public function next()
 	{
-		if ($this->dot == $this->slr->ruleLength($this->rule))
+		if (!$this->hasNext())
 		{
 			return null;
 		}
@@ -294,7 +659,7 @@ class Situation
 
 	public function step()
 	{
-		if ($this->dot == $this->slr->ruleLength($this->rule))
+		if (!$this->hasNext())
 		{
 			return false;
 		}
@@ -626,6 +991,11 @@ class State
 		}
 
 		$this->transitions[$token] = $state;
+	}
+
+	public function getTransitions()
+	{
+		return $this->transitions;
 	}
 
 	public function __toString()

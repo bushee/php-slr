@@ -20,10 +20,11 @@ $config = array(
 			array(
 				array('id'),
 				''
-			),
+			)
 		),
 	)
 );
 
 $slr = new SLR($config);
+//$slr->setShowConflicts(true);
 echo "$slr\n";
