@@ -1,7 +1,7 @@
 <?php
 require_once 'slr.php';
 
-$config = array(
+$parserConfig = array(
 	'start' => 'E',
 	'rules' => array(
 		'E' => array(
@@ -25,17 +25,20 @@ $config = array(
 	)
 );
 
-$tokens = array(
-	new Token('id', 0.1),
-	new Token('x'),
-	new Token('('),
-	new Token('id', 3.2),
-	new Token('+'),
-	new Token('id', 14),
-	new Token(')'),
+$lexerConfig = array(
+	'initial' => array(
+		array('string', '+', create_function('&$value', 'return \'+\';')),
+		array('string', '*', create_function('&$value', 'return \'x\';')),
+		array('string', '(', create_function('&$value', 'return \'(\';')),
+		array('string', ')', create_function('&$value', 'return \')\';')),
+		array('regex', '/[0-9]+/', create_function('&$value', 'return \'id\';'))
+	)
 );
 
-$slr = new SLR($config);
-$parser = new Parser($slr);
+$string = '3*(5+2)';
 
-var_dump($parser->parse($tokens));
+$lexer = new Lexer($lexerConfig);
+$parser = new Parser(new SLR($parserConfig));
+
+$tokens = $lexer->lex($string);
+var_dump($tokens, $parser->parse($tokens));

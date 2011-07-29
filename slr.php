@@ -1207,3 +1207,149 @@ class State
 		return $ret;
 	}
 }
+
+class Lexer
+{
+	protected $rules;
+
+	public function __construct($config)
+	{
+		$this->rules = array('all' => array());
+		foreach ($config as $state => $rules)
+		{
+			foreach ($rules as $rule)
+			{
+				if (is_callable($rule[2]))
+				{
+					$callback = $rule[2];
+				}
+				else
+				{
+					$callback = array(self, 'defaultCallback');
+				}
+
+				$this->rules[$state][] = array(
+					'matcher' => Matcher::getMatcher($rule[0], $rule[1]),
+					'callback' => $callback,
+					'stateSwitch' => $rule[3]
+				);
+			}
+		}
+	}
+
+	public static function defaultCallback(&$value)
+	{
+		return $value;
+	}
+
+	public function lex($string)
+	{
+		$offset = 0;
+		$length = strlen($string);
+		$currentState = 'initial';
+		$stateStack = array($currentState);
+		$tokens = array();
+
+		while ($offset < $length)
+		{
+			$rules = array_merge($this->rules[$currentState], $this->rules['all']);
+			$matched = false;
+
+			foreach ($rules as $rule)
+			{
+				$matched = $rule['matcher']->match($string, $offset);
+				if ($matched !== false)
+				{
+					$offset += strlen($matched);
+					$type = call_user_func($rule['callback'], &$matched);
+					$tokens[] = new Token($type, $matched, $currentState);
+
+					if ($rule['stateSwitch'])
+					{
+						if ($rule['stateSwitch'] == 'previous')
+						{
+							if (count($stateStack) == 1)
+							{
+								throw new Exception('Can\'t go to previous state anymore - state stack is empty.');
+							}
+							array_pop($stateStack);
+							$currentState = $stateStack[count($stateStack) - 1];
+						}
+						else
+						{
+							$currentState = $rule['stateSwitch'];
+							$stateStack[] = $currentState;
+						}
+					}
+
+					$matched = true;
+					break;
+				}
+			}
+
+			if (!$matched)
+			{
+				// TODO use unrecognized token here
+				throw new Exception('Cannot match ' . substr($string, $offset));
+			}
+		}
+
+		return $tokens;
+	}
+}
+
+abstract class Matcher
+{
+	protected $pattern;
+
+	public function __construct($pattern)
+	{
+		$this->pattern = $pattern;
+	}
+
+	public static function getMatcher($type, $pattern)
+	{
+		$className = ucfirst($type) . 'Matcher';
+		if (class_exists($className))
+		{
+			return new $className($pattern);
+		}
+		else
+		{
+			throw new Exception("Matcher \"$type\" doesn't exist.");
+		}
+	}
+
+	public abstract function match(&$string, $offset);
+}
+
+class StringMatcher extends Matcher
+{
+	public function match(&$string, $offset)
+	{
+		if (substr($string, $offset, strlen($this->pattern)) == $this->pattern)
+		{
+			return $this->pattern;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+class RegexMatcher extends Matcher
+{
+	public function match(&$string, $offset)
+	{
+		preg_match($this->pattern, $string, $matches, PREG_OFFSET_CAPTURE, $offset);
+		if (count($matches) > 0 && $matches[0][1] == $offset)
+		{
+			return $matches[0][0];
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
