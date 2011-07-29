@@ -22,7 +22,8 @@ $parserConfig = array(
 				create_function('$v', 'return $v[0];')
 			)
 		),
-	)
+	),
+	'success' => create_function('$v', 'echo "$v\n"; return $v;')
 );
 
 $lexerConfig = array(
@@ -41,4 +42,5 @@ $lexer = new Lexer($lexerConfig);
 $parser = new Parser(new SLR($parserConfig));
 
 $tokens = $lexer->lex($string);
-var_dump($tokens, $parser->parse($tokens));
+
+$parser->parse($tokens);

@@ -29,7 +29,7 @@ class Parser
 
 				if ($result === true)
 				{
-					return $stack[1]->value();
+					return $this->slr->success($stack[1]->value());
 				}
 				else
 				{
@@ -41,13 +41,14 @@ class Parser
 				if ($next == $endToken)
 				{
 					// TODO this exception should carry list of expected tokens
-					throw new Exception('unfinished');
+					$exception = new Exception('unfinished');
 				}
 				else
 				{
 					// TODO this exception should carry list of expected tokens
-					throw new Exception("Can't consume $next");
+					$exception = new Exception("Can't consume $next");
 				}
+				return $this->slr->failure($exception);
 			}
 		}
 	}
@@ -55,6 +56,8 @@ class Parser
 
 class Token
 {
+	const UNRECOGNIZED_TOKEN = 'T_UNRECOGNIZED_TOKEN';
+
 	protected $type;
 	protected $value;
 	protected $state;
@@ -64,6 +67,11 @@ class Token
 		$this->type = $type;
 		$this->value = $value;
 		$this->state = $state;
+	}
+
+	public static function getUnrecognizedToken($value = null, $state = null)
+	{
+		return new self(self::UNRECOGNIZED_TOKEN, $value, $state);
 	}
 
 	public function type()
@@ -122,6 +130,9 @@ class SLR
 	protected $showConflicts;
 	protected $conflicts;
 
+	protected $success;
+	protected $failure;
+
 	public function __construct($config)
 	{
 		$this->startToken = $config['start'];
@@ -141,6 +152,8 @@ class SLR
 		$this->canonicalSituationSetFamily = new TransitionSet($this);
 
 		$this->slrTable = $this->calculateSlrTable();
+
+		$this->addEndCallbacks($config);
 	}
 
 	protected function addStartRule()
@@ -420,7 +433,49 @@ class SLR
 			$table[$state->getId()] = $row;
 		}
 
+		// TODO emit warnings
 		return $table;
+	}
+
+	protected function addEndCallbacks($config)
+	{
+		if (isset($config['success']) && is_callable($config['success']))
+		{
+			$this->success = $config['success'];
+		}
+		else
+		{
+			$this->success = array(self, 'defaultSuccess');
+		}
+
+		if (isset($config['failure']) && is_callable($config['failure']))
+		{
+			$this->failure = $config['failure'];
+		}
+		else
+		{
+			$this->failure = array(self, 'defaultFailure');
+		}
+	}
+
+	public function defaultSuccess($value)
+	{
+		return $value;
+	}
+
+	public function defaultFailure($exception)
+	{
+		throw $exception;
+	}
+
+	public function success($value)
+	{
+		return call_user_func($this->success, $value);
+	}
+
+	public function failure($exception)
+	{
+		return call_user_func($this->failure, $exception);
 	}
 
 	public function actionFor($state, $token)
@@ -1211,9 +1266,12 @@ class State
 class Lexer
 {
 	protected $rules;
+	protected $useUnrecognizedToken;
 
-	public function __construct($config)
+	public function __construct($config, $useUnrecognizedToken = true)
 	{
+		$this->useUnrecognizedToken = $useUnrecognizedToken;
+
 		$this->rules = array('all' => array());
 		foreach ($config as $state => $rules)
 		{
@@ -1237,9 +1295,9 @@ class Lexer
 		}
 	}
 
-	public static function defaultCallback(&$value)
+	public static function defaultCallback()
 	{
-		return $value;
+		return null;
 	}
 
 	public function lex($string)
@@ -1249,6 +1307,8 @@ class Lexer
 		$currentState = 'initial';
 		$stateStack = array($currentState);
 		$tokens = array();
+
+		$unrecognized = null;
 
 		while ($offset < $length)
 		{
@@ -1260,6 +1320,8 @@ class Lexer
 				$matched = $rule['matcher']->match($string, $offset);
 				if ($matched !== false)
 				{
+					$this->checkUnrecognized(&$unrecognized, &$tokens);
+
 					$offset += strlen($matched);
 					$type = call_user_func($rule['callback'], &$matched);
 					$tokens[] = new Token($type, $matched, $currentState);
@@ -1283,18 +1345,36 @@ class Lexer
 					}
 
 					$matched = true;
+
 					break;
 				}
 			}
 
 			if (!$matched)
 			{
-				// TODO use unrecognized token here
-				throw new Exception('Cannot match ' . substr($string, $offset));
+				$unrecognized .= $string[$offset];
+				++ $offset;
 			}
 		}
+		$this->checkUnrecognized(&$unrecognized, &$tokens);
 
 		return $tokens;
+	}
+
+	protected function checkUnrecognized(&$unrecognized, &$tokens)
+	{
+		if (isset($unrecognized))
+		{
+			if ($this->useUnrecognizedToken)
+			{
+				$tokens[] = Token::getUnrecognizedToken($unrecognized, $currentState);
+				$unrecognized = null;
+			}
+			else
+			{
+				throw new Exception("Unrecognized token: \"$unrecognized\"");
+			}
+		}
 	}
 }
 
