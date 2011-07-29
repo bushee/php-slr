@@ -1,4 +1,106 @@
 <?php
+class Parser
+{
+	protected $slr;
+
+	public function __construct($slr)
+	{
+		$this->slr = $slr;
+	}
+
+	public function parse($tokens)
+	{
+		$endToken = $this->slr->getEndToken();
+		$tokens[] = $endToken;
+
+		$state = $this->slr->getStartState();
+		$stack = array(
+			$state
+		);
+
+		while(true)
+		{
+			$next = $tokens[0];
+			$action = $this->slr->actionFor($state, $next->type());
+
+			if ($action)
+			{
+				$result = $action->execute($stack, $tokens);
+
+				if ($result === true)
+				{
+					return $stack[1]->value();
+				}
+				else
+				{
+					$state = $result;
+				}
+			}
+			else
+			{
+				if ($next == $endToken)
+				{
+					// TODO this exception should carry list of expected tokens
+					throw new Exception('unfinished');
+				}
+				else
+				{
+					// TODO this exception should carry list of expected tokens
+					throw new Exception("Can't consume $next");
+				}
+			}
+		}
+	}
+}
+
+class Token
+{
+	protected $type;
+	protected $value;
+	protected $state;
+
+	public function __construct($type, $value = null, $state = null)
+	{
+		$this->type = $type;
+		$this->value = $value;
+		$this->state = $state;
+	}
+
+	public function type()
+	{
+		return $this->type;
+	}
+
+	public function value()
+	{
+		return $this->value;
+	}
+
+	public function state()
+	{
+		return $this->state;
+	}
+
+	public function __toString()
+	{
+		$s = $this->type;
+		$additional = array();
+		if (isset($this->value))
+		{
+			$additional[] = '"' . $this->value . '"';
+		}
+		if (isset($this->state))
+		{
+			$additional[] = '@' . $this->state;
+		}
+		if (!empty($additional))
+		{
+			$s .= ' (' . implode(' ', $additional) . ')';
+		}
+		return $s;
+	}
+}
+
 class SLR
 {
 	const START_TOKEN = '<start>';
@@ -69,11 +171,20 @@ class SLR
 					$right = array(self::EPSILON_TOKEN);
 				}
 
+				if (is_callable($rule[1]))
+				{
+					$callback = $rule[1];
+				}
+				else
+				{
+					$callback = array(self, 'defaultCallback');
+				}
+
 				$rule = array(
 					'id' => $id,
 					'left' => $left,
 					'right' => $right,
-					'callback' => $rule[1]
+					'callback' => $callback
 				);
 
 				$this->rulesByLefts[$left][$id] = $rule;
@@ -90,6 +201,11 @@ class SLR
 		}
 
 		return $tokens;
+	}
+
+	public static function defaultCallback($tokens)
+	{
+		return $tokens[0];
 	}
 
 	protected function divideTokens($tokens)
@@ -240,11 +356,11 @@ class SLR
 			{
 				if ($this->isTerminal($token))
 				{
-					$row[$token] = new ShiftAction($nextState);
+					$row[$token] = new ShiftAction($this, $nextState);
 				}
 				else
 				{
-					$row[$token] = new TransitionAction($nextState);
+					$row[$token] = new TransitionAction($this, $nextState);
 				}
 			}
 			foreach ($state->getSet() as $situation)
@@ -258,7 +374,7 @@ class SLR
 					}
 					else
 					{
-						$action = new ReduceAction($rule['id']);
+						$action = new ReduceAction($this, $rule['id']);
 					}
 
 					foreach ($this->follow($rule['left']) as $token)
@@ -307,6 +423,11 @@ class SLR
 		return $table;
 	}
 
+	public function actionFor($state, $token)
+	{
+		return $this->slrTable[$state][$token];
+	}
+
 	public function rule($id)
 	{
 		return $this->rulesOrdered[$id];
@@ -335,6 +456,16 @@ class SLR
 	public function isNonterminal($token)
 	{
 		return isset($this->nonterminalTokens[$token]);
+	}
+
+	public function getStartState()
+	{
+		return $this->canonicalSituationSetFamily->getStartState();
+	}
+
+	public function getEndToken()
+	{
+		return new Token(self::END_TOKEN);
 	}
 
 	public function setShowConflicts($value)
@@ -405,10 +536,12 @@ class SLR
 
 abstract class Action
 {
+	protected $slr;
 	protected $param;
 
-	public function __construct($param)
+	public function __construct(&$slr, $param)
 	{
+		$this->slr = $slr;
 		$this->param = $param;
 	}
 
@@ -419,6 +552,7 @@ abstract class Action
 
 	abstract public function getType();
 	abstract protected function prefix();
+	abstract public function execute(&$stack, &$input);
 
 	public function __toString()
 	{
@@ -437,6 +571,14 @@ class ShiftAction extends Action
 	{
 		return 's';
 	}
+
+	public function execute(&$stack, &$input)
+	{
+		$stack[] = array_shift($input);
+		$stack[] = $this->param;
+
+		return $this->param;
+	}
 }
 
 class ReduceAction extends Action
@@ -450,6 +592,42 @@ class ReduceAction extends Action
 	{
 		return 'r';
 	}
+
+	public function execute(&$stack, &$input)
+	{
+		$rule = $this->slr->rule($this->param);
+		$right = array();
+
+		for ($i = count($rule['right']) - 1; $i >= 0; -- $i)
+		{
+			while (!empty($stack))
+			{
+				$element = array_pop($stack);
+				if (is_a($element, 'Token'))
+				{
+					if ($element->type() == $rule['right'][$i])
+					{
+						array_unshift($right, $element->value());
+						break;
+					}
+					else
+					{
+						throw new Exception('Parser was compiled with errors...');
+					}
+				}
+			}
+		}
+		if (empty($stack))
+		{
+			throw new Exception('Parser was compiled with errors...');
+		}
+		else
+		{
+			$value = call_user_func($rule['callback'], $right);
+			array_unshift($input, new Token($rule['left'], $value));
+			return $stack[count($stack) - 1];
+		}
+	}
 }
 
 class TransitionAction extends Action
@@ -462,6 +640,13 @@ class TransitionAction extends Action
 	protected function prefix()
 	{
 		return '';
+	}
+
+	public function execute(&$stack, &$input)
+	{
+		$stack[] = array_shift($input);
+		$stack[] = $this->param;
+		return $this->param;
 	}
 }
 
@@ -479,6 +664,11 @@ class AcceptAction extends Action
 	protected function prefix()
 	{
 		return '';
+	}
+
+	public function execute(&$stack, &$input)
+	{
+		return true;
 	}
 
 	public function __toString()
@@ -879,6 +1069,7 @@ class TransitionSet implements Iterator
 {
 	protected $states;
 	protected $stateIds;
+	protected $startState;
 
 	public function __construct(&$slr)
 	{
@@ -888,7 +1079,7 @@ class TransitionSet implements Iterator
 		$situation = new Situation($slr, 0, 0);
 		$closure = $situation->closure();
 
-		$this->addState($closure);
+		$this->startState = $this->addState($closure);
 
 		foreach ($this as $state)
 		{
@@ -918,6 +1109,11 @@ class TransitionSet implements Iterator
 		}
 
 		return $id;
+	}
+
+	public function getStartState()
+	{
+		return $this->startState;
 	}
 
 	public function current()
