@@ -279,7 +279,7 @@ class SLR
 								continue;
 							}
 
-							$rightFirst = $this->first($right);
+							$rightFirst = $this->first($right, $visited);
 							$epsilon = isset($rightFirst[self::EPSILON_TOKEN]);
 							unset($rightFirst[self::EPSILON_TOKEN]);
 
@@ -341,9 +341,10 @@ class SLR
 							}
 							if ($epsilon || !($key + 1 < $length))
 							{
+								// avoid cycles
 								if (!isset($visited[$rule['left']]))
 								{
-									$follow = array_merge($follow, $this->follow($rule['left']));
+									$follow = array_merge($follow, $this->follow($rule['left'], $visited));
 								}
 							}
 						}
