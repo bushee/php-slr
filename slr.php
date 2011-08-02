@@ -249,113 +249,136 @@ class SLR
 	{
 		$visited[$token] = $token;
 
-		if (!isset($this->first[$token]))
+		if (isset($this->first[$token]))
 		{
-			if ($this->isTerminal($token))
-			{
-				$this->first[$token] = array(
-					$token => $token
-				);
-			}
-			else
-			{
-				$first = array();
+			$first = $this->first[$token];
+		}
+		elseif ($this->isTerminal($token))
+		{
+			$first = array(
+				$token => $token
+			);
+			$this->first[$token] = $first;
+		}
+		else
+		{
+			$first = array();
+			$save = true;
 
-				foreach ($this->rulesByLefts[$token] as $rule)
+			foreach ($this->rulesByLefts[$token] as $rule)
+			{
+				if (count($rule['right']) == 1 && $rule['right'][0] == self::EPSILON_TOKEN)
 				{
-					if (count($rule['right']) == 1 && $rule['right'][0] == self::EPSILON_TOKEN)
+					// if X -> epsilon, then epsilon is in first(X)
+					$first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+				}
+				else
+				{
+					$epsilonCounter = 0;
+					foreach ($rule['right'] as $right)
 					{
-						// if X -> epsilon, then epsilon is in first(X)
-						$first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+						// avoid cycles
+						if (isset($visited[$right]))
+						{
+							if ($right != $token)
+							{
+								// if first(X) for current X depends on any other tokens, don't save it - it may be incomplete
+								$save = false;
+							}
+
+							continue;
+						}
+
+						$rightFirst = $this->first($right, $visited);
+						$epsilon = isset($rightFirst[self::EPSILON_TOKEN]);
+						unset($rightFirst[self::EPSILON_TOKEN]);
+
+						// first(Yi)\{epsilon} is in first(X)
+						$first = array_merge($first, $rightFirst);
+						if ($epsilon)
+						{
+							++ $epsilonCounter;
+						}
+						else
+						{
+							break;
+						}
 					}
-					else
+
+					// if epsilon is in first(Yi) for all i, epsilon is in first(X)
+					if ($epsilonCounter == count($rule['right']))
 					{
-						$epsilonCounter = 0;
-						foreach ($rule['right'] as $right)
-						{
-							// avoid cycles
-							if (isset($visited[$right]))
-							{
-								continue;
-							}
-
-							$rightFirst = $this->first($right, $visited);
-							$epsilon = isset($rightFirst[self::EPSILON_TOKEN]);
-							unset($rightFirst[self::EPSILON_TOKEN]);
-
-							// first(Yi)\{epsilon} is in first(X)
-							$first = array_merge($first, $rightFirst);
-							if ($epsilon)
-							{
-								++ $epsilonCounter;
-							}
-							else
-							{
-								break;
-							}
-						}
-
-						// if epsilon is in first(Yi) for all i, epsilon is in first(X)
-						if ($epsilonCounter == count($rule['right']))
-						{
-							$first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
-						}
+						$first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
 					}
 				}
 
-				$this->first[$token] = $first;
+				if ($save)
+				{
+					$this->first[$token] = $first;
+				}
 			}
 		}
 
-		return $this->first[$token];
+		return $first;
 	}
 
 	protected function follow($token, $visited = array())
 	{
 		$visited[$token] = $token;
 
-		if (!isset($this->follow[$token]))
+		if (isset($this->follow[$token]))
+		{
+			$follow = $this->follow[$token];
+		}
+		elseif ($token == self::START_TOKEN)
+		{
+			$follow = array(self::END_TOKEN);
+			$this->follow[self::START_TOKEN] = $follow;
+		}
+		else
 		{
 			$follow = array();
+			$save = true;
 
-			if ($token == self::START_TOKEN)
+			foreach ($this->rulesByRights[$token] as $rule)
 			{
-				$follow[self::END_TOKEN] = self::END_TOKEN;
-			}
-			else
-			{
-				foreach ($this->rulesByRights[$token] as $rule)
+				$length = count($rule['right']);
+				foreach ($rule['right'] as $key => $rightToken)
 				{
-					$length = count($rule['right']);
-					foreach ($rule['right'] as $key => $rightToken)
+					if ($rightToken == $token)
 					{
-						if ($rightToken == $token)
+						$epsilon = false;
+						if ($key + 1 < $length)
 						{
-							$epsilon = false;
-							if ($key + 1 < $length)
+							$first = $this->first($rule['right'][$key + 1]);
+							$epsilon = isset($first[self::EPSILON_TOKEN]);
+							unset($first[self::EPSILON_TOKEN]);
+							$follow = array_merge($follow, $first);
+						}
+						if ($epsilon || !($key + 1 < $length))
+						{
+							// avoid cycles
+							if (!isset($visited[$rule['left']]))
 							{
-								$first = $this->first($rule['right'][$key + 1]);
-								$epsilon = isset($first[self::EPSILON_TOKEN]);
-								unset($first[self::EPSILON_TOKEN]);
-								$follow = array_merge($follow, $first);
+								$follow = array_merge($follow, $this->follow($rule['left'], $visited));
 							}
-							if ($epsilon || !($key + 1 < $length))
+							elseif ($token != $rule['left'])
 							{
-								// avoid cycles
-								if (!isset($visited[$rule['left']]))
-								{
-									$follow = array_merge($follow, $this->follow($rule['left'], $visited));
-								}
+								// if follow(X) for current X depends on any other tokens, don't save it - it may be incomplete
+								$save = false;
 							}
 						}
 					}
 				}
 			}
 
-			$this->follow[$token] = $follow;
+			if ($save)
+			{
+				$this->follow[$token] = $follow;
+			}
 		}
 
-		return $this->follow[$token];
+		return $follow;
 	}
 
 	protected function calculateSlrTable()
