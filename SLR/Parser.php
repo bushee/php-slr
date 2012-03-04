@@ -4,7 +4,7 @@
  *
  * PHP version 5.2.todo
  *
- * @category Main
+ * @category Core
  * @package  SLR
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
  * @license  TODO http://todo.org
@@ -14,7 +14,7 @@
 /**
  * Main parser class. Use it to create your own parsers.
  *
- * @category Main
+ * @category Core
  * @package  SLR
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
  * @license  TODO http://todo.org
