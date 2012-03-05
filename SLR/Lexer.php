@@ -1,9 +1,62 @@
 <?php
+/**
+ * Lexer class.
+ *
+ * PHP version 5.2.todo
+ *
+ * @category Core
+ * @package  SLR
+ * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license  TODO http://todo.org
+ * @link     http://bushee.ovh.org
+ */
+
+/**
+ * Main lexer class. Provides stand-alone lexer functionality, however you may use
+ * it to derive any custom lexers.
+ *
+ * @category Core
+ * @package  SLR
+ * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license  TODO http://todo.org
+ * @link     http://bushee.ovh.org
+ */
 class SLR_Lexer
 {
+    /**
+     * List of lexer rules.
+     *
+     * @var array $rules
+     */
     protected $rules;
+    /**
+     * Should unrecognized token be used for any tokens that couldn't have been
+     * matched against any matchers?
+     *
+     * @var bool $useUnrecognizedToken
+     */
     protected $useUnrecognizedToken;
+    /**
+     * Row of input the lexer's head is currently in.
+     *
+     * @var int $row
+     */
+    protected $row;
+    /**
+     * Column of input the lexer's head is currently in.
+     *
+     * @var int $column
+     */
+    protected $column;
 
+    /**
+     * Prepares lexer.
+     *
+     * @param array $config               lexer configuration
+     * @param bool  $useUnrecognizedToken should unrecognized token be used for any
+     *                                    tokens that couldn't have been matched
+     *                                    against any matchers?
+     */
     public function __construct($config, $useUnrecognizedToken = true)
     {
         $this->useUnrecognizedToken = $useUnrecognizedToken;
@@ -14,7 +67,7 @@ class SLR_Lexer
                 if (is_callable($rule[2])) {
                     $callback = $rule[2];
                 } else {
-                    $callback = array(self, 'defaultCallback');
+                    $callback = array($this, 'defaultCallback');
                 }
 
                 $this->rules[$state][] = array(
@@ -27,11 +80,24 @@ class SLR_Lexer
         }
     }
 
-    public static function defaultCallback()
+    /**
+     * Default callback used for any rules for which custom callbacks weren't
+     * specified.
+     *
+     * @return null
+     */
+    public function defaultCallback()
     {
         return null;
     }
 
+    /**
+     * Performs lexing (tokenization) of given input string.
+     *
+     * @param string $string input to be tokenized
+     *
+     * @return array
+     */
     public function lex($string)
     {
         $offset = 0;
@@ -39,6 +105,9 @@ class SLR_Lexer
         $currentState = 'initial';
         $stateStack = array($currentState);
         $tokens = array();
+        // TODO: counting rows and columns and adding them to tokens
+        $this->row = 0;
+        $this->column = 0;
 
         $unrecognized = null;
 
@@ -49,16 +118,21 @@ class SLR_Lexer
             foreach ($rules as $rule) {
                 $matched = $rule['matcher']->match($string, $offset);
                 if ($matched !== false) {
-                    $this->checkUnrecognized(&$unrecognized, &$tokens);
+                    $this->handleUnrecognized($unrecognized, &$tokens);
+                    $unrecognized = null;
 
                     $offset += strlen($matched);
                     $type = call_user_func($rule['callback'], &$matched);
-                    $tokens[] = new SLR_Elements_Tokens_Token($type, $matched, $currentState);
+                    $tokens[] = new SLR_Elements_Tokens_Token(
+                        $type, $matched, $currentState
+                    );
 
                     if ($rule['stateSwitch']) {
                         if ($rule['stateSwitch'] == 'previous') {
                             if (count($stateStack) == 1) {
-                                throw new Exception('Can\'t go to previous state anymore - state stack is empty.');
+                                throw new SLR_EmptyStateStackException(
+                                    $this->row, $this->column, $rule
+                                );
                             }
                             array_pop($stateStack);
                             $currentState = $stateStack[count($stateStack) - 1];
@@ -79,21 +153,36 @@ class SLR_Lexer
                 ++ $offset;
             }
         }
-        $this->checkUnrecognized(&$unrecognized, &$tokens);
+        $this->handleUnrecognized($unrecognized, &$tokens);
 
         return $tokens;
     }
 
-    protected function checkUnrecognized(&$unrecognized, &$tokens)
+    /**
+     * Handles unrecognized string:
+     * - if string is empty, does nothing, otherwise:
+     *  * adds unrecognized token to output stream, if lexer has such setting enabled
+     *  * throws an exception otherwise
+     * Output stream of tokens should always be passed by reference, since this
+     * method is allowed to modify it.
+     *
+     * @param string $unrecognized the unrecognized string that couldn't have been
+     *                             matched against any lexer rule
+     * @param array  $tokens       the output stream of tokens so far
+     *
+     * @return void
+     */
+    protected function handleUnrecognized($unrecognized, $tokens)
     {
         if (isset($unrecognized)) {
             if ($this->useUnrecognizedToken) {
                 $tokens[] = new SLR_Elements_Tokens_Unrecognized(
                     $unrecognized, $currentState
                 );
-                $unrecognized = null;
             } else {
-                throw new Exception("Unrecognized token: \"$unrecognized\"");
+                throw new SLR_UnrecognizedTokenException(
+                    $this->row, $this->column, $unrecognized
+                );
             }
         }
     }
