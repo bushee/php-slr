@@ -1,9 +1,7 @@
 <?php
 class SLR_SLR
 {
-    const START_TOKEN = '<start>';
-    const EPSILON_TOKEN = '<epsilon>';
-    const END_TOKEN = '$';
+    const START_META_NONTERMINAL_NAME = '<start>';
 
     protected $startToken;
     protected $rulesByLefts;
@@ -50,11 +48,11 @@ class SLR_SLR
     {
         $startRule = array(
             'id' => 0,
-            'left' => self::START_TOKEN,
+            'left' => self::START_META_NONTERMINAL_NAME,
             'right' => array($this->startToken),
             'callback' => ''
         );
-        $this->rulesByLefts[self::START_TOKEN][0] = $startRule;
+        $this->rulesByLefts[self::START_META_NONTERMINAL_NAME][0] = $startRule;
         $this->rulesByRights[$this->startToken][0] = $startRule;
         $this->rulesOrdered[0] = $startRule;
     }
@@ -68,7 +66,7 @@ class SLR_SLR
             foreach ($rules as $rule) {
                 $right = $rule[0];
                 if (empty($right)) {
-                    $right = array(self::EPSILON_TOKEN);
+                    $right = array(SLR_Elements_Tokens_Epsilon::TOKEN_NAME);
                 }
 
                 if (is_callable($rule[1])) {
@@ -109,7 +107,7 @@ class SLR_SLR
         $this->terminalTokens = array(
         );
         $this->nonterminalTokens = array(
-            self::START_TOKEN => self::START_TOKEN
+            self::START_META_NONTERMINAL_NAME => self::START_META_NONTERMINAL_NAME
         );
 
         foreach ($tokens as $token) {
@@ -120,8 +118,10 @@ class SLR_SLR
             }
         }
 
-        $this->terminalTokens[self::END_TOKEN] = self::END_TOKEN;
-        $this->terminalTokens[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+        $this->terminalTokens[SLR_Elements_Tokens_End::TOKEN_NAME]
+            = SLR_Elements_Tokens_End::TOKEN_NAME;
+        $this->terminalTokens[SLR_Elements_Tokens_Epsilon::TOKEN_NAME]
+            = SLR_Elements_Tokens_Epsilon::TOKEN_NAME;
     }
 
     protected function first($token, $visited = array())
@@ -140,9 +140,9 @@ class SLR_SLR
             $save = true;
 
             foreach ($this->rulesByLefts[$token] as $rule) {
-                if (count($rule['right']) == 1 && $rule['right'][0] == self::EPSILON_TOKEN) {
+                if (count($rule['right']) == 1 && $rule['right'][0] == SLR_Elements_Tokens_Epsilon::TOKEN_NAME) {
                     // if X -> epsilon, then epsilon is in first(X)
-                    $first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+                    $first[SLR_Elements_Tokens_Epsilon::TOKEN_NAME] = SLR_Elements_Tokens_Epsilon::TOKEN_NAME;
                 } else {
                     $epsilonCounter = 0;
                     foreach ($rule['right'] as $right) {
@@ -157,8 +157,8 @@ class SLR_SLR
                         }
 
                         $rightFirst = $this->first($right, $visited);
-                        $epsilon = isset($rightFirst[self::EPSILON_TOKEN]);
-                        unset($rightFirst[self::EPSILON_TOKEN]);
+                        $epsilon = isset($rightFirst[SLR_Elements_Tokens_Epsilon::TOKEN_NAME]);
+                        unset($rightFirst[SLR_Elements_Tokens_Epsilon::TOKEN_NAME]);
 
                         // first(Yi)\{epsilon} is in first(X)
                         $first = array_merge($first, $rightFirst);
@@ -171,7 +171,8 @@ class SLR_SLR
 
                     // if epsilon is in first(Yi) for all i, epsilon is in first(X)
                     if ($epsilonCounter == count($rule['right'])) {
-                        $first[self::EPSILON_TOKEN] = self::EPSILON_TOKEN;
+                        $first[SLR_Elements_Tokens_Epsilon::TOKEN_NAME]
+                            = SLR_Elements_Tokens_Epsilon::TOKEN_NAME;
                     }
                 }
 
@@ -190,9 +191,9 @@ class SLR_SLR
 
         if (isset($this->follow[$token])) {
             $follow = $this->follow[$token];
-        } elseif ($token == self::START_TOKEN) {
-            $follow = array(self::END_TOKEN);
-            $this->follow[self::START_TOKEN] = $follow;
+        } elseif ($token == self::START_META_NONTERMINAL_NAME) {
+            $follow = array(SLR_Elements_Tokens_End::TOKEN_NAME);
+            $this->follow[self::START_META_NONTERMINAL_NAME] = $follow;
         } else {
             $follow = array();
             $save = true;
@@ -204,8 +205,8 @@ class SLR_SLR
                         $epsilon = false;
                         if ($key + 1 < $length) {
                             $first = $this->first($rule['right'][$key + 1]);
-                            $epsilon = isset($first[self::EPSILON_TOKEN]);
-                            unset($first[self::EPSILON_TOKEN]);
+                            $epsilon = isset($first[SLR_Elements_Tokens_Epsilon::TOKEN_NAME]);
+                            unset($first[SLR_Elements_Tokens_Epsilon::TOKEN_NAME]);
                             $follow = array_merge($follow, $first);
                         }
                         if ($epsilon || !($key + 1 < $length)) {
@@ -246,7 +247,7 @@ class SLR_SLR
             foreach ($state->getSet() as $situation) {
                 if (!$situation->hasNext()) {
                     $rule = $situation->getRule();
-                    if ($rule['left'] == self::START_TOKEN) {
+                    if ($rule['left'] == self::START_META_NONTERMINAL_NAME) {
                         $action = new SLR_Actions_Accept();
                     } else {
                         $action = new SLR_Actions_Reduce($this, $rule['id']);
@@ -364,11 +365,6 @@ class SLR_SLR
         return $this->canonicalSituationSetFamily->getStartState();
     }
 
-    public function getEndToken()
-    {
-        return new SLR_Elements_Token(self::END_TOKEN);
-    }
-
     public function setShowConflicts($value)
     {
         $this->showConflicts = $value;
@@ -386,7 +382,7 @@ class SLR_SLR
         $table->addBorder(1, SLR_Utils_TablePrinter::BORDER_HORIZONTAL);
         $table->addBorder($x);
         foreach ($this->terminalTokens as $token) {
-            if ($token != self::EPSILON_TOKEN) {
+            if ($token != SLR_Elements_Tokens_Epsilon::TOKEN_NAME) {
                 $table->cell($x, 0, $token);
                 $offsetsX[$token] = $x;
                 ++ $x;
@@ -394,7 +390,7 @@ class SLR_SLR
         }
         $table->addBorder($x);
         foreach ($this->nonterminalTokens as $token) {
-            if ($token != self::START_TOKEN) {
+            if ($token != self::START_META_NONTERMINAL_NAME) {
                 $table->cell($x, 0, $token);
                 $offsetsX[$token] = $x;
                 ++ $x;

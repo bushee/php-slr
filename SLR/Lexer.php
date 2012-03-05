@@ -53,7 +53,7 @@ class SLR_Lexer
 
                     $offset += strlen($matched);
                     $type = call_user_func($rule['callback'], &$matched);
-                    $tokens[] = new SLR_Elements_Token($type, $matched, $currentState);
+                    $tokens[] = new SLR_Elements_Tokens_Token($type, $matched, $currentState);
 
                     if ($rule['stateSwitch']) {
                         if ($rule['stateSwitch'] == 'previous') {
@@ -88,7 +88,9 @@ class SLR_Lexer
     {
         if (isset($unrecognized)) {
             if ($this->useUnrecognizedToken) {
-                $tokens[] = SLR_Elements_Token::getUnrecognizedToken($unrecognized, $currentState);
+                $tokens[] = new SLR_Elements_Tokens_Unrecognized(
+                    $unrecognized, $currentState
+                );
                 $unrecognized = null;
             } else {
                 throw new Exception("Unrecognized token: \"$unrecognized\"");

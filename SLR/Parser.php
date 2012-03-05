@@ -31,7 +31,7 @@ class SLR_Parser
 
     public function parse($tokens)
     {
-        $endToken = $this->slr->getEndToken();
+        $endToken = new SLR_Elements_Tokens_End();
         $tokens[] = $endToken;
 
         $state = $this->slr->getStartState();
@@ -41,13 +41,13 @@ class SLR_Parser
 
         while (true) {
             $next = $tokens[0];
-            $action = $this->slr->actionFor($state, $next->type());
+            $action = $this->slr->actionFor($state, $next->getType());
 
             if ($action) {
                 $result = $action->execute($stack, $tokens);
 
                 if ($result === true) {
-                    return $this->slr->success($stack[1]->value());
+                    return $this->slr->success($stack[1]->getValue());
                 } else {
                     $state = $result;
                 }
