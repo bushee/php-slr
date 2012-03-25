@@ -32,11 +32,14 @@ class SLR_Elements_Tokens_Unrecognized extends SLR_Elements_Tokens_Token
     /**
      * Creates unrecognized token.
      *
-     * @param mixed  $value token's value
-     * @param string $state lexer's state that token was captured in
+     * @param mixed  $value  token's value
+     * @param string $state  lexer's state that token was captured in
+     * @param int    $row    input row that token was captured in
+     * @param int    $column input column that token was captured in
      */
-    public function __construct($value = null, $state = null)
-    {
-        parent::__construct(self::TOKEN_NAME, $value, $state);
+    public function __construct(
+        $value = null, $state = null, $row = null, $column = null
+    ) {
+        parent::__construct(self::TOKEN_NAME, $value, $state, $row, $column);
     }
 }

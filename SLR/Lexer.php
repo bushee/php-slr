@@ -37,17 +37,17 @@ class SLR_Lexer
      */
     protected $useUnrecognizedToken;
     /**
-     * Row of input the lexer's head is currently in.
+     * Row of input the lexer's caret is currently in.
      *
-     * @var int $row
+     * @var int $caretRow
      */
-    protected $row;
+    protected $caretRow;
     /**
-     * Column of input the lexer's head is currently in.
+     * Column of input the lexer's caret is currently in.
      *
-     * @var int $column
+     * @var int $caretColumn
      */
-    protected $column;
+    protected $caretColumn;
 
     /**
      * Prepares lexer.
@@ -105,9 +105,8 @@ class SLR_Lexer
         $currentState = 'initial';
         $stateStack = array($currentState);
         $tokens = array();
-        // TODO: counting rows and columns and adding them to tokens
-        $this->row = 0;
-        $this->column = 0;
+        $this->caretRow = 1;
+        $this->caretColumn = 1;
 
         $unrecognized = null;
 
@@ -118,20 +117,26 @@ class SLR_Lexer
             foreach ($rules as $rule) {
                 $matched = $rule['matcher']->match($string, $offset);
                 if ($matched !== false) {
-                    $this->handleUnrecognized($unrecognized, &$tokens);
+                    $this->handleUnrecognized($unrecognized, $tokens);
                     $unrecognized = null;
 
                     $offset += strlen($matched);
-                    $type = call_user_func($rule['callback'], &$matched);
+                    /* dirty hack - called call_user_func_array instead of
+                       call_user_func just to avoid E_STRICT warning  due to
+                       call-time passing variable by reference */
+                    $type = call_user_func_array(
+                        $rule['callback'], array(&$matched)
+                    );
                     $tokens[] = new SLR_Elements_Tokens_Token(
-                        $type, $matched, $currentState
+                        $type, $matched, $currentState,
+                        $this->caretRow, $this->caretColumn
                     );
 
                     if ($rule['stateSwitch']) {
                         if ($rule['stateSwitch'] == 'previous') {
                             if (count($stateStack) == 1) {
                                 throw new SLR_EmptyStateStackException(
-                                    $this->row, $this->column, $rule
+                                    $this->caretRow, $this->caretColumn, $rule
                                 );
                             }
                             array_pop($stateStack);
@@ -142,8 +147,8 @@ class SLR_Lexer
                         }
                     }
 
+                    $this->updateCaret($matched);
                     $matched = true;
-
                     break;
                 }
             }
@@ -153,9 +158,50 @@ class SLR_Lexer
                 ++ $offset;
             }
         }
-        $this->handleUnrecognized($unrecognized, &$tokens);
+        $this->handleUnrecognized($unrecognized, $tokens);
 
         return $tokens;
+    }
+
+    /**
+     * Updates lexer's caret position, basing on newly consumed fragment of input.
+     *
+     * @param string $text newly matched text to be used to update caret position
+     *
+     * @return void
+     */
+    protected function updateCaret($text)
+    {
+        $possibleEols = array("\r\n" => 2, "\n\r" => 2, "\r" => 1, "\n" => 1);
+
+        $offset = 0;
+        do {
+            $found = false;
+            foreach ($possibleEols as $eol => $length) {
+                $pos = mb_strpos($text, $eol, $offset);
+                if ($pos !== false) {
+                    $found = true;
+                    $offset = $pos + $length;
+                    ++ $this->caretRow;
+                    $this->caretColumn = 1;
+                }
+            }
+        } while ($found);
+        $this->caretColumn += mb_strlen(mb_substr($text, $offset));
+    }
+
+    /**
+     * Returns lexer's caret position.
+     * Return result has two indices: 'row' and 'column'.
+     *
+     * @return array
+     */
+    public function getCaretPosition()
+    {
+        return array(
+            'row' => $this->caretRow,
+            'column' => $this->caretColumn
+        );
     }
 
     /**
@@ -168,20 +214,24 @@ class SLR_Lexer
      *
      * @param string $unrecognized the unrecognized string that couldn't have been
      *                             matched against any lexer rule
-     * @param array  $tokens       the output stream of tokens so far
+     * @param array  &$tokens      the output stream of tokens so far
      *
      * @return void
      */
-    protected function handleUnrecognized($unrecognized, $tokens)
+    protected function handleUnrecognized($unrecognized, &$tokens)
     {
         if (isset($unrecognized)) {
             if ($this->useUnrecognizedToken) {
                 $tokens[] = new SLR_Elements_Tokens_Unrecognized(
-                    $unrecognized, $currentState
+                    $unrecognized, $currentState, $this->caretRow, $this->caretColumn
                 );
+                $this->updateCaret($unrecognized);
             } else {
+                $caretRow = $this->caretRow;
+                $caretColumn = $this->caretColumn;
+                $this->updateCaret($unrecognized);
                 throw new SLR_UnrecognizedTokenException(
-                    $this->row, $this->column, $unrecognized
+                    $caretRow, $caretColumn, $unrecognized
                 );
             }
         }

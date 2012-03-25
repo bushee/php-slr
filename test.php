@@ -42,5 +42,6 @@ $lexer = new SLR_Lexer($lexerConfig);
 $parser = new SLR_Parser(new SLR_SLR($parserConfig));
 
 $tokens = $lexer->lex($string);
+$lexerCaretPosition = $lexer->getCaretPosition();
 
-$parser->parse($tokens);
+$parser->parse($tokens, $lexerCaretPosition['row']);

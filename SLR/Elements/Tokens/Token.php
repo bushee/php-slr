@@ -41,19 +41,36 @@ class SLR_Elements_Tokens_Token
      * @var string $state
      */
     protected $state;
+    /**
+     * Input row that token was captured in.
+     *
+     * @var string $row
+     */
+    protected $row;
+    /**
+     * Input column that token was captured in.
+     *
+     * @var string $column
+     */
+    protected $column;
 
     /**
      * Creates new token.
      *
-     * @param string $type  token type
-     * @param mixed  $value token value
-     * @param string $state lexer's state that token was captured in
+     * @param string $type   token type
+     * @param mixed  $value  token value
+     * @param string $state  lexer's state that token was captured in
+     * @param int    $row    input row that token was captured in
+     * @param int    $column input column that token was captured in
      */
-    public function __construct($type, $value = null, $state = null)
-    {
+    public function __construct(
+        $type, $value = null, $state = null, $row = null, $column = null
+    ) {
         $this->type = $type;
         $this->value = $value;
         $this->state = $state;
+        $this->row = $row;
+        $this->column = $column;
     }
 
     /**
@@ -87,6 +104,26 @@ class SLR_Elements_Tokens_Token
     }
 
     /**
+     * Returns input row that token was captured in.
+     *
+     * @return int
+     */
+    public function getRow()
+    {
+        return $this->row;
+    }
+
+    /**
+     * Returns input column that token was captured in.
+     *
+     * @return int
+     */
+    public function getColumn()
+    {
+        return $this->column;
+    }
+
+    /**
      * Returns token's human readable string representation.
      *
      * @return string
@@ -100,6 +137,12 @@ class SLR_Elements_Tokens_Token
         }
         if (isset($this->state)) {
             $additional[] = '@' . $this->state;
+        }
+        if (isset($this->row)) {
+            $additional[] = 'row: ' . $this->row;
+        }
+        if (isset($this->column)) {
+            $additional[] = 'column: ' . $this->column;
         }
         if (!empty($additional)) {
             $s .= ' (' . implode(' ', $additional) . ')';

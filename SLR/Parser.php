@@ -49,13 +49,15 @@ class SLR_Parser
      * Please note that parser performs parsing itself, and string tokenization is
      * a matter of proper lexer.
      *
-     * @param array $tokens input stream of tokens to be parsed
+     * @param array $tokens   input stream of tokens to be parsed
+     * @param int   $rowCount optional number of original input's rows, used to
+     *                        fill end token's column offset for better error info
      *
      * @return mixed
      */
-    public function parse($tokens)
+    public function parse($tokens, $rowCount = null)
     {
-        $endToken = new SLR_Elements_Tokens_End();
+        $endToken = new SLR_Elements_Tokens_End($rowCount);
         $tokens[] = $endToken;
 
         $state = $this->slr->getStartState();

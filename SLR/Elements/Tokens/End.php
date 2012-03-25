@@ -32,9 +32,12 @@ class SLR_Elements_Tokens_End extends SLR_Elements_Tokens_Token
 
     /**
      * Creates end token.
+     *
+     * @param int $row    input row that token was captured in
+     * @param int $column input column that token was captured in
      */
-    public function __construct()
+    public function __construct($row = null, $column = null)
     {
-        parent::__construct(self::TOKEN_NAME);
+        parent::__construct(self::TOKEN_NAME, null, null, $row, $column);
     }
 }
