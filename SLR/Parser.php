@@ -49,13 +49,17 @@ class SLR_Parser
      * Please note that parser performs parsing itself, and string tokenization is
      * a matter of proper lexer.
      *
-     * @param array $tokens   input stream of tokens to be parsed
-     * @param int   $rowCount optional number of original input's rows, used to
-     *                        fill end token's column offset for better error info
+     * @param array    $tokens   input stream of tokens to be parsed
+     * @param int      $rowCount optional number of original input's rows, used to
+     *                           fill end token's column offset for better error info
+     * @param int|bool $expLimit max. amount of expected tokens to be included
+     *                           in exception message (in case of parse error)
+     *
+     * @see SLR_UnexpectedTokenException::__construct for more details on $expLimit
      *
      * @return mixed
      */
-    public function parse($tokens, $rowCount = null)
+    public function parse($tokens, $rowCount = null, $expLimit = 1)
     {
         $endToken = new SLR_Elements_Tokens_End($rowCount);
         $tokens[] = $endToken;
@@ -78,12 +82,15 @@ class SLR_Parser
                     $state = $result;
                 }
             } else {
-                if ($next == $endToken) {
-                    // TODO this exception should carry list of expected tokens
-                    $exception = new Exception('unfinished');
+                $expectedTokens = $this->slr->expectedTokens($state);
+                if (is_a($next, 'SLR_Elements_Tokens_End')) {
+                    $exception = new SLR_UnexpectedEndOfInputException(
+                        $next, $expectedTokens
+                    );
                 } else {
-                    // TODO this exception should carry list of expected tokens
-                    $exception = new Exception("Can't consume $next");
+                    $exception = new SLR_UnexpectedTokenException(
+                        $next, $expectedTokens, $expLimit
+                    );
                 }
                 return $this->slr->failure($exception);
             }

@@ -185,7 +185,7 @@ class SLR_SLR
                 if (is_callable($rule[1])) {
                     $callback = $rule[1];
                 } else {
-                    $callback = array(self, 'defaultCallback');
+                    $callback = array(__CLASS__, 'defaultCallback');
                 }
 
                 $rule = array(
@@ -566,6 +566,22 @@ class SLR_SLR
     public function actionFor($state, $token)
     {
         return $this->slrTable[$state][$token];
+    }
+
+    /**
+     * Returns list of all tokens expected in given state.
+     *
+     * @param int $state state ID
+     *
+     * @return array
+     */
+    public function expectedTokens($state)
+    {
+        $expected = array();
+        foreach ($this->slrTable[$state] as $token => $dummy) {
+            $expected[] = $token;
+        }
+        return $expected;
     }
 
     /**

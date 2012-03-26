@@ -28,7 +28,7 @@ class SLR_Elements_Tokens_End extends SLR_Elements_Tokens_Token
      *
      * @const string TOKEN_NAME
      */
-    const TOKEN_NAME = '$';
+    const TOKEN_NAME = 'T_EOF';
 
     /**
      * Creates end token.

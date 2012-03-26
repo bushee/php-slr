@@ -39,7 +39,8 @@ $lexerConfig = array(
 $string = '3*(5+2)';
 
 $lexer = new SLR_Lexer($lexerConfig);
-$parser = new SLR_Parser(new SLR_SLR($parserConfig));
+$slr = new SLR_SLR($parserConfig);
+$parser = new SLR_Parser($slr);
 
 $tokens = $lexer->lex($string);
 $lexerCaretPosition = $lexer->getCaretPosition();
