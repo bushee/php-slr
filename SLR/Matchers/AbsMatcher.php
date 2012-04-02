@@ -60,7 +60,7 @@ abstract class SLR_Matchers_AbsMatcher
             $instance->init(array_slice(func_get_args(), 2));
             return $instance;
         } else {
-            throw new Exception("Matcher \"$type\" doesn't exist.");
+            throw new SLR_Matchers_MatcherNotFoundException($type);
         }
     }
 
