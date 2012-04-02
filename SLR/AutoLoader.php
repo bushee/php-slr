@@ -72,7 +72,10 @@ class SLR_AutoLoader
         if ($classParts[0] === 'SLR') {
             array_shift($classParts);
             $filepath = implode(DIRECTORY_SEPARATOR, $classParts);
-            include_once $this->_basedir . $filepath . '.php';
+            $filename = $this->_basedir . $filepath . '.php';
+            if (file_exists($filename)) {
+                include_once $filename;
+            }
         }
     }
 }
