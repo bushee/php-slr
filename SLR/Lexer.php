@@ -117,7 +117,7 @@ class SLR_Lexer
             foreach ($rules as $rule) {
                 $matched = $rule['matcher']->match($string, $offset);
                 if ($matched !== false) {
-                    $this->handleUnrecognized($unrecognized, $tokens);
+                    $this->handleUnrecognized($unrecognized, $currentState, $tokens);
                     $unrecognized = null;
 
                     $offset += strlen($matched);
@@ -158,7 +158,7 @@ class SLR_Lexer
                 ++ $offset;
             }
         }
-        $this->handleUnrecognized($unrecognized, $tokens);
+        $this->handleUnrecognized($unrecognized, $currentState, $tokens);
 
         return $tokens;
     }
@@ -214,11 +214,12 @@ class SLR_Lexer
      *
      * @param string $unrecognized the unrecognized string that couldn't have been
      *                             matched against any lexer rule
+     * @param string $currentState lexer's current state
      * @param array  &$tokens      the output stream of tokens so far
      *
      * @return void
      */
-    protected function handleUnrecognized($unrecognized, &$tokens)
+    protected function handleUnrecognized($unrecognized, $currentState, &$tokens)
     {
         if (isset($unrecognized)) {
             if ($this->useUnrecognizedToken) {
