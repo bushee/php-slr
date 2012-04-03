@@ -1,4 +1,15 @@
 <?php
+/**
+ * Test file.
+ *
+ * PHP version 5.2.todo
+ *
+ * @category Core
+ * @package  SLR
+ * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license  TODO http://todo.org
+ * @link     http://bushee.ovh.org
+ */
 require_once 'slr.php';
 
 $parserConfig = array(
