@@ -23,7 +23,7 @@
 class SLR_SLR
 {
     /**
-     * Name for meta-nonterminal that whole input stream should be reducable to. 
+     * Name for meta-nonterminal that whole input stream should be reducable to.
      *
      * @const string START_META_NONTERMINAL_NAME
      */
@@ -484,13 +484,13 @@ class SLR_SLR
         if (isset($config['success']) && is_callable($config['success'])) {
             $this->success = $config['success'];
         } else {
-            $this->success = array(self, 'defaultSuccess');
+            $this->success = array(__CLASS__, 'defaultSuccess');
         }
 
         if (isset($config['failure']) && is_callable($config['failure'])) {
             $this->failure = $config['failure'];
         } else {
-            $this->failure = array(self, 'defaultFailure');
+            $this->failure = array(__CLASS__, 'defaultFailure');
         }
     }
 
