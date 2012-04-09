@@ -23,6 +23,13 @@
 class SLR_AutoLoader
 {
     /**
+     * Pattern against name of each potential class to be loaded will be matched.
+     *
+     * @const string
+     */
+    const CLASS_NAME_PATTERN = '/^SLR(_[A-Z][0-9A-Za-z]*)+$/i';
+
+    /**
      * Path to SLR base directory.
      *
      * @var string $basedir
@@ -68,11 +75,10 @@ class SLR_AutoLoader
      */
     public function load($classname)
     {
-        $classParts = explode('_', $classname);
-        if ($classParts[0] === 'SLR') {
-            array_shift($classParts);
-            $filepath = implode(DIRECTORY_SEPARATOR, $classParts);
-            $filename = $this->_basedir . $filepath . '.php';
+        if (preg_match(self::CLASS_NAME_PATTERN, $classname)) {
+            $filename = $this->_basedir
+                . str_replace('_', DIRECTORY_SEPARATOR, substr($classname, 4))
+                . '.php';
             if (file_exists($filename)) {
                 include_once $filename;
             }
