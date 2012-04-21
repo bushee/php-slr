@@ -23,6 +23,17 @@
 abstract class SLR_Matchers_AbsMatcher
 {
     /**
+     * Matcher class prefixes registered in factory.
+     * Array key is used only for hashing purposes, so that two equal prefixes
+     * are never used.
+     *
+     * @var array $_registeredPrefixes
+     */
+    private static $_registeredPrefixes = array(
+        'slr_matchers_' => 'SLR_Matchers_'
+    );
+
+    /**
      * Matcher's pattern. It's real meaning is abstract, and depends purely on
      * matcher instance; however, it is stored here for convenience.
      *
@@ -41,6 +52,22 @@ abstract class SLR_Matchers_AbsMatcher
     }
 
     /**
+     * Registers new prefix for matcher factory.
+     * These prefixes are used to determine final class names for matchers
+     * requested via getMatcher() method.
+     *
+     * @param string $prefix new matcher class prefix to register
+     *
+     * @return void
+     *
+     * @see SLR_Matchers_AbsMatcher::getMatcher
+     */
+    public static function registerPrefix($prefix)
+    {
+        self::$_registeredPrefixes[strtolower($prefix)] = $prefix;
+    }
+
+    /**
      * Returns new instance of matcher of given type.
      * Please note that despite of this method's signature, any surplus parameters
      * will be passed to matcher's constructor as well (keep that in mind while
@@ -50,18 +77,20 @@ abstract class SLR_Matchers_AbsMatcher
      * @param string $pattern matcher's pattern
      *
      * @return SLR_Matchers_AbsMatcher
+     *
+     * @see SLR_Matchers_AbsMatcher::registerPrefix
      */
     public static function getMatcher($type, $pattern)
     {
-        // TODO add custom prefixes support
-        $className = 'SLR_Matchers_' . ucfirst($type);
-        if (class_exists($className)) {
-            $instance = new $className($pattern);
-            $instance->init(array_slice(func_get_args(), 2));
-            return $instance;
-        } else {
-            throw new SLR_Matchers_MatcherNotFoundException($type);
+        foreach (self::$_registeredPrefixes as $prefix) {
+            $className = $prefix . ucfirst($type);
+            if (class_exists($className)) {
+                $instance = new $className($pattern);
+                $instance->init(array_slice(func_get_args(), 2));
+                return $instance;
+            }
         }
+        throw new SLR_Matchers_MatcherNotFoundException($type);
     }
 
     /**
