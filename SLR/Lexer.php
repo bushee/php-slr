@@ -2,7 +2,7 @@
 /**
  * Lexer class.
  *
- * PHP version 5.2.todo
+ * PHP version 5.2
  *
  * @category SLR
  * @package  Core

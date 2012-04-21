@@ -3,7 +3,7 @@
  * Main SLR library entry point.
  * Simply include this file into your project and enjoy using SLR!
  *
- * PHP version 5.2.todo
+ * PHP version 5.2
  *
  * @category SLR
  * @package  Core
