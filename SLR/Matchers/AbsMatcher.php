@@ -4,20 +4,20 @@
  *
  * PHP version 5.2.todo
  *
- * @category Matchers
- * @package  SLR
+ * @category SLR
+ * @package  Matchers
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
 /**
  * Abstract matcher class. Used for deriving any custom lexer matchers.
  *
- * @category Matchers
- * @package  SLR
+ * @category SLR
+ * @package  Matchers
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 abstract class SLR_Matchers_AbsMatcher

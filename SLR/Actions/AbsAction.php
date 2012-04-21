@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Actions
- * @package  SLR
+ * @category SLR
+ * @package  Actions
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -15,10 +15,10 @@
  * Abstract action class. Used to provide common interface for all actions available
  * in parser's SLR table.
  *
- * @category Actions
- * @package  SLR
+ * @category SLR
+ * @package  Actions
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 abstract class SLR_Actions_AbsAction

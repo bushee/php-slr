@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Elements
- * @package  SLR
+ * @category SLR
+ * @package  Elements
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -17,10 +17,10 @@
  * iterate over all states, in order of their addition (probably in ascending order
  * of their IDs).
  *
- * @category Elements
- * @package  SLR
+ * @category SLR
+ * @package  Elements
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Elements_TransitionSet implements Iterator

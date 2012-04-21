@@ -4,20 +4,20 @@
  *
  * PHP version 5.2.todo
  *
- * @category Tokens
- * @package  SLR
+ * @category SLR
+ * @package  Tokens
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
 /**
  * Epsilon token class. This special token represents empty right side of rule.
  *
- * @category Tokens
- * @package  SLR
+ * @category SLR
+ * @package  Tokens
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Elements_Tokens_Epsilon extends SLR_Elements_Tokens_Token

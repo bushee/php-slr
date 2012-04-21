@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Actions
- * @package  SLR
+ * @category SLR
+ * @package  Actions
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -19,10 +19,10 @@
  * that shift may occur only upon reaching some terminal token, while transition
  * - only upon reaching non-terminal token.
  *
- * @category Actions
- * @package  SLR
+ * @category SLR
+ * @package  Actions
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  * @see      SLR_Actions_Transition
  */

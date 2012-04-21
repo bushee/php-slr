@@ -4,20 +4,20 @@
  *
  * PHP version 5.2.todo
  *
- * @category Tokens
- * @package  SLR
+ * @category SLR
+ * @package  Tokens
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
 /**
  * Unrecognized token class. Used to represent tokens that have not been recognized.
  *
- * @category Tokens
- * @package  SLR
+ * @category SLR
+ * @package  Tokens
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Elements_Tokens_Unrecognized extends SLR_Elements_Tokens_Token

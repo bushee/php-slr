@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Core
- * @package  SLR
+ * @category SLR
+ * @package  Core
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -15,10 +15,10 @@
  * Main lexer class. Provides stand-alone lexer functionality, however you may use
  * it to derive any custom lexers.
  *
- * @category Core
- * @package  SLR
+ * @category SLR
+ * @package  Core
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Lexer

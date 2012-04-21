@@ -4,22 +4,24 @@
  *
  * PHP version 5.2.todo
  *
- * @category Exceptions
- * @package  SLR
- * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
- * @link     http://bushee.ovh.org
+ * @category   SLR
+ * @package    Elements
+ * @subpackage Exceptions
+ * @author     Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license    BSD http://www.opensource.org/licenses/bsd-license.php
+ * @link       http://bushee.ovh.org
  */
 
 /**
  * Exception for when invalid state was about to be created; this means that illegal
  * position for dot was chosen for a rule.
  *
- * @category Exceptions
- * @package  SLR
- * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
- * @link     http://bushee.ovh.org
+ * @category   SLR
+ * @package    Elements
+ * @subpackage Exceptions
+ * @author     Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license    BSD http://www.opensource.org/licenses/bsd-license.php
+ * @link       http://bushee.ovh.org
  */
 class SLR_Elements_InvalidSituationException extends Exception
 {

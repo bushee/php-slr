@@ -4,22 +4,24 @@
  *
  * PHP version 5.2.todo
  *
- * @category Exceptions
- * @package  SLR
- * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
- * @link     http://bushee.ovh.org
+ * @category   SLR
+ * @package    Elements
+ * @subpackage Exceptions
+ * @author     Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license    BSD http://www.opensource.org/licenses/bsd-license.php
+ * @link       http://bushee.ovh.org
  */
 
 /**
  * Exception for when there was a trial to add transition possibility for token
  * that there is already a known transition for in given state.
  *
- * @category Exceptions
- * @package  SLR
- * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
- * @link     http://bushee.ovh.org
+ * @category   SLR
+ * @package    Elements
+ * @subpackage Exceptions
+ * @author     Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license    BSD http://www.opensource.org/licenses/bsd-license.php
+ * @link       http://bushee.ovh.org
  */
 class SLR_Elements_TransitionAlreadyExistsException extends Exception
 {

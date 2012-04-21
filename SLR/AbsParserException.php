@@ -4,21 +4,23 @@
  *
  * PHP version 5.2.todo
  *
- * @category Exceptions
- * @package  SLR
- * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
- * @link     http://bushee.ovh.org
+ * @category   SLR
+ * @package    Core
+ * @subpackage Exceptions
+ * @author     Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license    BSD http://www.opensource.org/licenses/bsd-license.php
+ * @link       http://bushee.ovh.org
  */
 
 /**
  * Abstract parser exception for deriving any parsing-based exceptions.
  *
- * @category Exceptions
- * @package  SLR
- * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
- * @link     http://bushee.ovh.org
+ * @category   SLR
+ * @package    Core
+ * @subpackage Exceptions
+ * @author     Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
+ * @license    BSD http://www.opensource.org/licenses/bsd-license.php
+ * @link       http://bushee.ovh.org
  */
 class SLR_AbsParserException extends Exception
 {

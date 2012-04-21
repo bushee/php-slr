@@ -4,20 +4,20 @@
  *
  * PHP version 5.2.todo
  *
- * @category Utils
- * @package  SLR
+ * @category SLR
+ * @package  Utils
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
 /**
  * TablePrinter class for printing any human readable table data.
  *
- * @category Utils
- * @package  SLR
+ * @category SLR
+ * @package  Utils
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Utils_TablePrinter

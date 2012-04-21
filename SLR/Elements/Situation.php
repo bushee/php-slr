@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Elements
- * @package  SLR
+ * @category SLR
+ * @package  Elements
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -18,10 +18,10 @@
  * all tokens "to the left" of aforementioned position, and still needs to consume
  * all the tokens "to the right".
  *
- * @category Elements
- * @package  SLR
+ * @category SLR
+ * @package  Elements
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Elements_Situation

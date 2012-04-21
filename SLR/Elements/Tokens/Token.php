@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Tokens
- * @package  SLR
+ * @category SLR
+ * @package  Tokens
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -15,10 +15,10 @@
  * Token class. Used to represent any given token, as well as a base for custom token
  * classes.
  *
- * @category Tokens
- * @package  SLR
+ * @category SLR
+ * @package  Tokens
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Elements_Tokens_Token

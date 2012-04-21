@@ -4,10 +4,10 @@
  *
  * PHP version 5.2.todo
  *
- * @category Actions
- * @package  SLR
+ * @category SLR
+ * @package  Actions
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
@@ -15,10 +15,10 @@
  * Reduce action class. Represents action taken when some grammar rule's conditions
  * have been met and some part of parsing stack should be reduced to a single token.
  *
- * @category Actions
- * @package  SLR
+ * @category SLR
+ * @package  Actions
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
- * @license  TODO http://todo.org
+ * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 class SLR_Actions_Reduce extends SLR_Actions_AbsAction
