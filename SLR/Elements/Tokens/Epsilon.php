@@ -19,6 +19,8 @@
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
+ *
+ * TODO not sure whether epsilon token makes sense at all
  */
 class SLR_Elements_Tokens_Epsilon extends SLR_Elements_Tokens_Token
 {

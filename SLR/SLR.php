@@ -179,7 +179,8 @@ class SLR_SLR
             foreach ($rules as $rule) {
                 $right = $rule[0];
                 if (empty($right)) {
-                    $right = array(SLR_Elements_Tokens_Epsilon::TOKEN_NAME);
+                    // TODO not sure whether epsilon token makes sense at all
+                    // $right = array(SLR_Elements_Tokens_Epsilon::TOKEN_NAME);
                 }
 
                 if (is_callable($rule[1])) {
@@ -692,6 +693,7 @@ class SLR_SLR
         $table->addBorder(1, SLR_Utils_TablePrinter::BORDER_HORIZONTAL);
         $table->addBorder($x);
         foreach ($this->terminalTokens as $token) {
+            // TODO not sure whether epsilon token makes sense at all
             if ($token != SLR_Elements_Tokens_Epsilon::TOKEN_NAME) {
                 $table->cell($x, 0, $token);
                 $offsetsX[$token] = $x;

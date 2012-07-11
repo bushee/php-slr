@@ -48,6 +48,7 @@ $parserConfig = array(
 );
 
 // TODO pretty classes for lexer config and rules
+// TODO operator precedence routines
 $lexerConfig = array(
 	'initial' => array(
 		array('string', '+', create_function('&$value', 'return \'+\';')),
@@ -58,7 +59,7 @@ $lexerConfig = array(
 	)
 );
 
-$string = '3*(5+2)+13';
+$string = '3*(5+2)+13*2+1';
 
 $lexer = new SLR_Lexer($lexerConfig);
 $slr = new SLR_SLR($parserConfig);
