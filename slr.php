@@ -11,7 +11,9 @@
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
-require_once 'SLR' . DIRECTORY_SEPARATOR . 'AutoLoader.php';
-$slrAutoloader = new SLR_AutoLoader(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'SLR');
+require_once dirname(__FILE__) . 'SLR/Utils/AutoLoader.php';
+$slrAutoloader = new SLR\Utils\AutoLoader(
+    dirname(__FILE__) . DIRECTORY_SEPARATOR . 'SLR'
+);
 $slrAutoloader->initialize();
 unset($slrAutoloader);

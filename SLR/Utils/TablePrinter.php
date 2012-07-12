@@ -5,22 +5,26 @@
  * PHP version 5.2
  *
  * @category SLR
- * @package  Utils
+ * @package  SLR\Utils
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
 
+namespace SLR\Utils;
+
 /**
  * TablePrinter class for printing any human readable table data.
  *
  * @category SLR
- * @package  Utils
+ * @package  SLR\Utils
  * @author   Krzysztof "Bushee" Nowaczyk <bushee01@gmail.com>
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
-class SLR_Utils_TablePrinter
+use SLR\Utils\Exception\UnknownBorderTypeException;
+
+class TablePrinter
 {
     /**
      * Vertical border.
@@ -81,9 +85,9 @@ class SLR_Utils_TablePrinter
      * Class constructor.
      * Allows to explicitly define minimal amount of rows and columns in table.
      *
-     * @param int $padding horizontal cell padding
-     * @param int $width   minimal width of table (amount of columns)
-     * @param int $height  minimal height of table (amount of rows)
+     * @param int $padding Horizontal cell padding
+     * @param int $width   Minimal width of table (amount of columns)
+     * @param int $height  Minimal height of table (amount of rows)
      */
     public function __construct($padding = 2, $width = 0, $height = 0)
     {
@@ -98,9 +102,10 @@ class SLR_Utils_TablePrinter
     /**
      * Adds value to cell.
      *
-     * @param int   $x     X offset of cell
-     * @param int   $y     Y offset of cell
-     * @param mixed $value new cell value; will be cast to string
+     * @param int    $x     X offset of cell
+     * @param int    $y     Y offset of cell
+     * @param string $value New cell value; will be cast to string anyway, but
+     *                      passing string in the first place is advised
      *
      * @return void
      */
@@ -129,43 +134,48 @@ class SLR_Utils_TablePrinter
      * - on left side of specified column
      * - on top side of specified row
      *
-     * @param int    $offset offset of row/column
-     * @param string $type   offset type - whether to add border to row or column
+     * @param int    $offset Offset of row/column
+     * @param string $type   Offset type - whether to add border to row or column
      *
      * @return void
+     *
+     * @throws UnknownBorderTypeException When border of unknown type was to be added
      */
     public function addBorder($offset, $type = self::BORDER_VERTICAL)
     {
         if ($type == self::BORDER_HORIZONTAL || $type == self::BORDER_VERTICAL) {
             $this->borders[$type][$offset] = true;
         } else {
-            throw new SLR_Utils_UnknownBorderTypeException($type);
+            throw new UnknownBorderTypeException($type);
         }
     }
 
     /**
      * Removes previously added additional border.
      *
-     * @param int    $offset offset of row/column
-     * @param string $type   offset type - whether to add border to row or column
+     * @param int    $offset Offset of row/column
+     * @param string $type   Offset type - whether to add border to row or column
      *
-     * @see SLR_Utils_TablePrinter::addBorder
+     * @see TablePrinter::addBorder
      *
      * @return void
+     *
+     * @throws UnknownBorderTypeException When border of unknown type was to be
+     *                                    removed
      */
     public function removeBorder($offset, $type = self::BORDER_VERTICAL)
     {
         if ($type == self::BORDER_HORIZONTAL || $type == self::BORDER_VERTICAL) {
             unset($this->borders[$type][$offset]);
         } else {
-            throw new SLR_Utils_UnknownBorderTypeException($type);
+            throw new UnknownBorderTypeException($type);
         }
     }
 
     /**
      * Sets horizontal cell padding.
      *
-     * @param int $padding new padding value
+     * @param int $padding New padding value
      *
      * @return void
      */
