@@ -25,11 +25,11 @@ namespace SLR\Utils;
 class AutoLoader
 {
     /**
-     * Pattern against name of each potential class to be loaded will be matched.
+     * Top-level namespace supported by this autoloader.
      *
-     * @const string
+     * @const string SUPPORTED_NAMESPACE
      */
-    const CLASS_NAME_PATTERN = '/^SLR(\\\\[A-Z][0-9A-Za-z]*)+$/i';
+    const SUPPORTED_NAMESPACE = 'SLR\\';
 
     /**
      * Path to SLR base directory.
@@ -77,7 +77,7 @@ class AutoLoader
      */
     public function load($classname)
     {
-        if (preg_match(self::CLASS_NAME_PATTERN, $classname)) {
+        if (strpos($classname, self::SUPPORTED_NAMESPACE) === 0) {
             $filename = $this->_basedir
                 . str_replace('\\', DIRECTORY_SEPARATOR, substr($classname, 4))
                 . '.php';
