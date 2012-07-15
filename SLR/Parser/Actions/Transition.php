@@ -2,7 +2,7 @@
 /**
  * Transition class.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Parser\Actions
@@ -30,11 +30,11 @@ namespace SLR\Parser\Actions;
  */
 class Transition extends AbsAction
 {
-	/**
-	 * Returns human-readable action type string.
-	 *
-	 * @return string
-	 */
+    /**
+     * Returns human-readable action type string.
+     *
+     * @return string
+     */
     public function getType()
     {
         return 'transition';

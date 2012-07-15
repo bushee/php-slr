@@ -2,7 +2,7 @@
 /**
  * TransitionAlreadyExistsException exception.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Parser\Elements\Exception
@@ -12,6 +12,8 @@
  */
 
 namespace SLR\Parser\Elements\Exception;
+
+use SLR\Parser\Elements\State;
 
 /**
  * Exception for when there was a trial to add transition possibility for token
@@ -23,8 +25,6 @@ namespace SLR\Parser\Elements\Exception;
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
-use SLR\Parser\Elements\State;
-
 class TransitionAlreadyExistsException extends \Exception
 {
     /**

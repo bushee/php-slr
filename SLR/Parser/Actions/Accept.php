@@ -2,7 +2,7 @@
 /**
  * Accept class.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Parser\Actions
@@ -25,9 +25,9 @@ namespace SLR\Parser\Actions;
  */
 class Accept extends AbsAction
 {
-	/**
-	 * Creates new accept action.
-	 */
+    /**
+     * Creates new accept action.
+     */
     public function __construct()
     {
     }

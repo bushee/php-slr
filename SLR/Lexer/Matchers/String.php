@@ -2,7 +2,7 @@
 /**
  * String class.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Lexer\Matchers

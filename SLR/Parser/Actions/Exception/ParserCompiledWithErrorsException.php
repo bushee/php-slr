@@ -2,7 +2,7 @@
 /**
  * ParserCompiledWithErrorsException exception.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Parser\Actions\Exception
@@ -33,7 +33,7 @@ class ParserCompiledWithErrorsException extends \Exception
      * @param \Exception $previous Previous exception used for exception chaining
      */
     public function __construct(
-    	$message = '', $code = 0, \Exception $previous = null
+        $message = '', $code = 0, \Exception $previous = null
     ) {
         parent::__construct($message, $code, $previous);
     }

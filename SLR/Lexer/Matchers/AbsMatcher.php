@@ -2,7 +2,7 @@
 /**
  * AbsMatcher class.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Lexer\Matchers
@@ -13,6 +13,8 @@
 
 namespace SLR\Lexer\Matchers;
 
+use SLR\Lexer\Matchers\Exception\MatcherNotFoundException;
+
 /**
  * Abstract matcher class. Used for deriving any custom lexer matchers.
  *
@@ -22,8 +24,6 @@ namespace SLR\Lexer\Matchers;
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
-use SLR\Lexer\Matchers\Exception\MatcherNotFoundException;
-
 abstract class AbsMatcher
 {
     /**

@@ -2,7 +2,7 @@
 /**
  * TablePrinter class.
  *
- * PHP version 5.2
+ * PHP version 5.3
  *
  * @category SLR
  * @package  SLR\Utils
@@ -13,6 +13,8 @@
 
 namespace SLR\Utils;
 
+use SLR\Utils\Exception\UnknownBorderTypeException;
+
 /**
  * TablePrinter class for printing any human readable table data.
  *
@@ -22,8 +24,6 @@ namespace SLR\Utils;
  * @license  BSD http://www.opensource.org/licenses/bsd-license.php
  * @link     http://bushee.ovh.org
  */
-use SLR\Utils\Exception\UnknownBorderTypeException;
-
 class TablePrinter
 {
     /**
